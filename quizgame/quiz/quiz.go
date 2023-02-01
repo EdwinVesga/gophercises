@@ -48,9 +48,13 @@ func StartQuiz(file *os.File, duration time.Duration) {
 
 func quizDuration(d time.Duration, n, i *int) {
 	<-time.NewTimer(d).C
+	printSummary(*n, *i)
+	os.Exit(0)
+}
+
+func printSummary(n, i int) {
 	fmt.Println()
 	fmt.Println("You have reached the time limit!")
 	fmt.Println("-- Quiz Summary --")
-	fmt.Printf("Correct: %d, Incorrect: %d", *i, *n-*i)
-	os.Exit(0)
+	fmt.Printf("Correct: %d, Incorrect: %d", i, n-i)
 }
