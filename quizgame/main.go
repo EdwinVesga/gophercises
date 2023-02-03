@@ -28,5 +28,10 @@ func main() {
 
 	d := time.Second * time.Duration(*quizTimeLimit)
 
-	quiz.StartQuiz(f, d)
+	err = quiz.StartQuiz(f, d)
+
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }
