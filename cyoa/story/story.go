@@ -9,54 +9,58 @@ import (
 	"strings"
 )
 
-const defaultTemplate = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Choose Your Own Adventure</title>
-</head>
-<body>
-  <h1>{{.Title}}</h1>
-  {{range .Story}}
-  <p>{{.}}</p>
-  {{end}}
-  <ul>
-    {{range .Options}}
-    <li><a href="/{{.Arc}}">{{.Text}}</a></li>
-    {{end}}
-  </ul>
-</body>
-</html>
-`
-
 var tmp *template.Template
 
 func init() {
-	tmp = template.Must(template.New("").Parse(defaultTemplate))
+	tmp = template.Must(template.ParseFiles("template.html"))
 }
 
-func NewHandler(story Story) http.Handler {
-	return handler{story}
+type HandlerOpt func(h *handler)
+
+func WithTemplate(t *template.Template) HandlerOpt {
+	return func(h *handler) {
+		h.t = t
+	}
+}
+
+func WithPathFunc(f func(r *http.Request) string) HandlerOpt {
+	return func(h *handler) {
+		h.pathFunc = f
+	}
+}
+
+func NewHandler(s Story, opts ...HandlerOpt) http.Handler {
+	h := handler{s, tmp, defaultPathFunc}
+
+	for _, opt := range opts {
+		opt(&h)
+	}
+
+	return h
 }
 
 type handler struct {
-	Story Story
+	s        Story
+	t        *template.Template
+	pathFunc func(r *http.Request) string
 }
 
-func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func defaultPathFunc(r *http.Request) string {
 	path := strings.TrimSpace(r.URL.Path)
 
 	if path == "" || path == "/" {
 		path = "/intro"
 	}
 
-	story := path[1:]
+	return path[1:]
+}
 
-	if st, ok := h.Story[story]; ok {
-		if err := tmp.Execute(w, st); err != nil {
+func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+	story := h.pathFunc(r)
+
+	if st, ok := h.s[story]; ok {
+		if err := h.t.Execute(w, st); err != nil {
 			log.Println(err)
 			http.Error(w, "Something went wront!", http.StatusInternalServerError)
 		}

@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/EdwinVesga/gophercises/cyoa/story"
 )
@@ -25,8 +26,19 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
-	h := story.NewHandler(st)
+	mux := http.NewServeMux()
+	h := story.NewHandler(st, story.WithPathFunc(storyPathFunc))
+	mux.Handle("/story/", h)
 	fmt.Printf("Starting server on port: %d", *port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), h))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), mux))
+}
+
+func storyPathFunc(r *http.Request) string {
+	path := strings.TrimSpace(r.URL.Path)
+
+	if path == "/story" || path == "/story/" {
+		path = "/story/intro"
+	}
+
+	return path[len("/story/"):]
 }
