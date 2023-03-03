@@ -10,8 +10,10 @@ import (
 const htmlexample = `
 <html>
   <body>
-    <h1>Hello!</h1>
-    <a href="/other-page">A link to another page</a>
+    <a href="/dog-cat"
+      >dog cat
+      <!-- commented text SHOULD NOT be included! --></a
+    >
   </body>
 </html>
 `

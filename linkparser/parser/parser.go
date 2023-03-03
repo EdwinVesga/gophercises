@@ -2,6 +2,7 @@ package parser
 
 import (
 	"io"
+	"strings"
 
 	"golang.org/x/net/html"
 )
@@ -46,7 +47,21 @@ func buildLink(n *html.Node) Link {
 			break
 		}
 	}
-	ret.Text = "Todo href text"
+	ret.Text = buildText(n)
 
 	return ret
+}
+
+func buildText(n *html.Node) string {
+	if n.Type == html.TextNode {
+		return n.Data
+	}
+
+	sb := strings.Builder{}
+
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		sb.WriteString(buildText(c))
+	}
+
+	return strings.Join(strings.Fields(sb.String()), " ")
 }
